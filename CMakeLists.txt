@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
-project(demo_package)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project(waypoint_package)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 # find dependencies
@@ -14,11 +18,11 @@ find_package(common_package REQUIRED)
 
 include_directories(include)
 
-add_executable(demo_node src/main.cpp)
-ament_target_dependencies(demo_node rclcpp interfaces common_package nlohmann_json)
+add_executable(waypoint_node src/main.cpp)
+ament_target_dependencies(waypoint_node rclcpp interfaces common_package nlohmann_json)
 
 install (TARGETS
-  demo_node
+  waypoint_node
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
