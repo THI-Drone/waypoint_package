@@ -11,7 +11,7 @@ public:
      *
      * @param id The unique name for the node.
      */
-    WaypointNode(std::string id) : CommonNode(id)
+    WaypointNode() : CommonNode("waypoint_node")
     {
     }
 };
@@ -19,7 +19,7 @@ public:
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<WaypointNode>("waypoint_node"));
+    rclcpp::spin(std::make_shared<WaypointNode>());
     rclcpp::shutdown();
     return 0;
 }
