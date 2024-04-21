@@ -113,6 +113,24 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
         }
         cmd.target_height = p["target_height"];
 
+        // 'horizontal_speed' is required
+        if (!p.contains("horizontal_speed"))
+        {
+            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'horizontal_speed'");
+            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'horizontal_speed'");
+            return;
+        }
+        cmd.horizontal_speed = p["horizontal_speed"];
+
+        // 'vertical_speed' is required
+        if (!p.contains("vertical_speed"))
+        {
+            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'vertical_speed'");
+            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'vertical_speed'");
+            return;
+        }
+        cmd.vertical_speed = p["vertical_speed"];
+
         // Add command to vector
         commands.push_back(cmd);
     }
