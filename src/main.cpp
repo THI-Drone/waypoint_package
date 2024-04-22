@@ -7,7 +7,48 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node")
     control_subscription = this->create_subscription<interfaces::msg::Control>(
         "control", 10, std::bind(&WaypointNode::callback_control, this, _1));
 
-    job_finished_publisher = this->create_publisher<interfaces::msg::JobFinished>("job_finished", 10);
+    // Initialize Event Loop
+    event_loop_timer = this->create_wall_timer(std::chrono::milliseconds(event_loop_time_delta_ms), std::bind(&WaypointNode::event_loop, this));
+}
+
+/**
+ * @brief Checks if the first loop was already triggered and returns the result.
+ *
+ * This function checks the state of the first loop and returns false if it was already triggered,
+ * otherwise it returns true. After returning the state, it sets the first loop state to false.
+ *
+ * @return False if the first loop was already triggered, true otherwise.
+ */
+bool WaypointNode::get_state_first_loop()
+{
+    // Check if first loop was already triggered
+    if (!state_first_loop)
+        return false;
+
+    // Set first loop to false and return true
+    state_first_loop = false;
+    return true;
+}
+
+void WaypointNode::event_loop()
+{
+    if (!this->get_active())
+        return;
+
+    if (get_state_first_loop())
+    {
+        // Check if cmd is specified
+        if(!cmd.values_set)
+        {
+            RCLCPP_FATAL(this->get_logger(), "WaypointNode::event_loop: Node was activated without specifing a command");
+            this->job_finished("WaypointNode::event_loop: Node was activated without specifing a command");
+            return;
+        }
+
+        // TODO send waypoint command
+    }
+
+    // TODO check flight path
 }
 
 /**
@@ -34,106 +75,52 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
     if (msg.active != this->get_active())
     {
         if (msg.active)
+        {
+            state_first_loop = true;
             this->activate();
+        }
         else
+        {
             this->deactivate();
+        }
     }
 
-    commands.clear(); // delete all previous commands
-
-    // If the node should be deactivated, don't parse the payload as it only relevant in active mode
+    // If the node should be deactivated, don't parse the payload as it is only relevant in active mode
     if (!this->get_active())
+    {
+        cmd = command(); // delete previous command
         return;
+    }
 
-    // Parse payload, save data in command struct and append to commands vector
-    nlohmann::json payload;
-
+    nlohmann::json cmd_json;
     try
     {
-        payload = nlohmann::json::parse(msg.payload);
+        cmd_json = common_lib::CommandDefinitions::parse_check_json(msg.payload, common_lib::CommandDefinitions::get_waypoint_command_definition());
     }
-    catch (const nlohmann::json::parse_error &e)
+    catch (const std::runtime_error &e)
     {
-        RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload could not be parsed");
-        this->job_finished("WaypointNode::callback_control: Payload could not be parsed");
+        RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Received invalid json as payload: %s", e.what());
+        this->job_finished((std::string) "WaypointNode::callback_control: Received invalid json as payload: " + e.what());
         return;
     }
 
-    // Separate payload if it is an array
-    std::vector<nlohmann::json> payloads;
-    if (payload.is_array())
-    {
-        for (const auto &p : payload)
-        {
-            payloads.push_back(p);
-        }
-    }
-    else
-    {
-        payloads.push_back(payload);
-    }
+    cmd = command(); // init with default values
+    cmd.values_set = true;
 
-    // Create a struct command from every payload and save it in the commands vector
-    for (const auto &p : payloads)
-    {
-        command cmd;
+    // Required parameters
+    cmd.target_coordinate_lat = cmd_json.at("target_coordinate_lat");
+    cmd.target_coordinate_lon = cmd_json.at("target_coordinate_lon");
+    cmd.travel_height_cm = cmd_json.at("travel_height_cm");
+    cmd.target_height_cm = cmd_json.at("target_height_cm");
+    cmd.horizontal_speed_mps = cmd_json.at("horizontal_speed_mps");
+    cmd.vertical_speed_mps = cmd_json.at("vertical_speed_mps");
 
-        // 'post_wait_time_ms' is optional
-        if (p.contains("post_wait_time_ms"))
-            cmd.post_wait_time_ms = p["post_wait_time_ms"];
+    // Optional parameters
+    if (cmd_json.contains("pre_wait_time_ms"))
+        cmd.pre_wait_time_ms = cmd_json.at("pre_wait_time_ms");
 
-        // 'pre_wait_time_ms' is optional
-        if (p.contains("pre_wait_time_ms"))
-            cmd.pre_wait_time_ms = p["pre_wait_time_ms"];
-
-        // 'target_coordinate' is required
-        if (!p.contains("target_coordinate"))
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'target_coordinate'");
-            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'target_coordinate'");
-            return;
-        }
-        cmd.target_coordinate = p["target_coordinate"];
-
-        // 'travel_height' is required
-        if (!p.contains("travel_height"))
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'travel_height'");
-            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'travel_height'");
-            return;
-        }
-        cmd.travel_height = p["travel_height"];
-
-        // 'target_height' is required
-        if (!p.contains("target_height"))
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'target_height'");
-            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'target_height'");
-            return;
-        }
-        cmd.target_height = p["target_height"];
-
-        // 'horizontal_speed' is required
-        if (!p.contains("horizontal_speed"))
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'horizontal_speed'");
-            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'horizontal_speed'");
-            return;
-        }
-        cmd.horizontal_speed = p["horizontal_speed"];
-
-        // 'vertical_speed' is required
-        if (!p.contains("vertical_speed"))
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_control: Payload does not include required field 'vertical_speed'");
-            this->job_finished("WaypointNode::callback_control: Payload does not include required field 'vertical_speed'");
-            return;
-        }
-        cmd.vertical_speed = p["vertical_speed"];
-
-        // Add command to vector
-        commands.push_back(cmd);
-    }
+    if (cmd_json.contains("post_wait_time_ms"))
+        cmd.post_wait_time_ms = cmd_json.at("post_wait_time_ms");
 }
 
 int main(int argc, char *argv[])
