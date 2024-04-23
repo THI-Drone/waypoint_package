@@ -9,9 +9,6 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node")
 
     // Initialize Event Loop
     event_loop_timer = this->create_wall_timer(std::chrono::milliseconds(event_loop_time_delta_ms), std::bind(&WaypointNode::event_loop, this));
-
-    // Initialize Wait Timer
-    wait_timer = this->create_wall_timer(std::chrono::milliseconds(0), std::bind(&WaypointNode::callback_wait_time, this));
 }
 
 /**
@@ -33,22 +30,53 @@ bool WaypointNode::get_state_first_loop()
     return true;
 }
 
+/**
+ * @brief Executes the event loop for the WaypointNode.
+ *
+ * This function is responsible for executing the event loop of the WaypointNode class.
+ * It checks the node state and performs the corresponding actions based on the state.
+ * The possible states are:
+ * - init: Initializes the mode.
+ * - pre_wait_time: Does nothing.
+ * - fly_to_waypoint: Executes the mode to fly to the waypoint.
+ * - post_wait_time: Does nothing.
+ *
+ * If the node state is unknown, an error message is logged and a job_finished error message is sent.
+ */
 void WaypointNode::event_loop()
 {
     if (!this->get_active())
         return;
 
-    switch(get_node_state()){
-        case init:
-            mode_init();
-            break;
-        
-        // TODO implement other cases
-
-        default:
-            RCLCPP_ERROR(this->get_logger(), "WaypointNode::event_loop: Unknown mission_state: %d", get_node_state());
-            this->job_finished("WaypointNode::event_loop: Unknown mission_state");
+    switch (get_node_state())
+    {
+    case init:
+        mode_init();
+        break;
+    case pre_wait_time:
+        break; // Do nothing
+    case fly_to_waypoint:
+        mode_fly_to_waypoint();
+        break;
+    case post_wait_time:
+        break; // Do nothing
+    default:
+        RCLCPP_ERROR(this->get_logger(), "WaypointNode::event_loop: Unknown mission_state: %d", get_node_state());
+        this->job_finished("WaypointNode::event_loop: Unknown mission_state");
     }
+}
+
+/**
+ * @brief Resets the node for the next command.
+ *
+ * This function resets the state of the `WaypointNode` object for the next command. It sets the node state to `init`,
+ * sets the `state_first_loop` flag to `true`, and clears the `cmd` object.
+ */
+void WaypointNode::reset_node()
+{
+    set_node_state(init);
+    state_first_loop = true;
+    cmd = Command();
 }
 
 /**
@@ -72,14 +100,12 @@ void WaypointNode::set_node_state(NodeState_t new_state)
 
 /**
  * @brief Callback function for the control message.
- *
+ * 
  * This function is called when a control message is received. It processes the message,
  * activates the node based on the message, parses the payload, and saves
- * the data in the command struct. It also appends the command to the commands vector.
- * Multiple waypoints can be sent at a time when using a JSON array.
- * If you only want to sent one waypoint, an array is not needed.
- *
- * @param msg The control message to be processed.
+ * the data in a Command struct.
+ * 
+ * @param msg The control message received.
  */
 void WaypointNode::callback_control(const interfaces::msg::Control &msg)
 {
@@ -91,8 +117,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
     }
 
     // Init node state
-    set_node_state(init);
-    state_first_loop = true;
+    reset_node();
 
     // Activate or deactivate node based on the message
     if (msg.active != this->get_active())
@@ -110,7 +135,6 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
     // If the node should be deactivated, don't parse the payload as it is only relevant in active mode
     if (!this->get_active())
     {
-        cmd = command(); // delete previous command
         return;
     }
 
@@ -126,7 +150,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
         return;
     }
 
-    cmd = command(); // init with default values
+    // Set flag to true to indicate that the object has real values in it
     cmd.values_set = true;
 
     // Required parameters
@@ -145,34 +169,104 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
         cmd.post_wait_time_ms = cmd_json.at("post_wait_time_ms");
 }
 
+/**
+ * @brief Callback function for handling wait time completion.
+ *
+ * This function is called when the wait time for a waypoint is completed.
+ * It deactivates the timer, checks if the mission was aborted during the wait time,
+ * and reacts according to the current state of the node.
+ *
+ * @note If the node has an incorrect state, a fatal error is logged and a job_finished error message is sent.
+ */
 void WaypointNode::callback_wait_time()
 {
+    // Deactivate Timer
+    wait_timer->cancel();
+
     // Check if the mission was aborted during the wait time
-    if(!this->get_active()) return;
+    if (!this->get_active())
+        return;
+
+    // React according to state
+    switch (get_node_state())
+    {
+    case pre_wait_time:
+        set_node_state(fly_to_waypoint);
+        break;
+    case post_wait_time:
+        // Job finished successfully: Reset node for next command
+        this->job_finished();
+        reset_node();
+        break;
+    default:
+        RCLCPP_FATAL(this->get_logger(), "WaypointNode::callback_wait_time: Node has incorrect state: %d", get_node_state());
+        this->job_finished("WaypointNode::callback_wait_time: Node has incorrect state: " + get_node_state());
+        return;
+    }
 }
 
+/**
+ * @brief Initializes the mode of the WaypointNode.
+ *
+ * This function is responsible for initializing the mode of the WaypointNode.
+ * It checks if a command is specified and performs the necessary actions based on the command.
+ * If a pre_wait_time is specified, it sets the node state to pre_wait_time and initializes a wait timer.
+ * If no pre_wait_time is specified, it skips the pre_wait_time state and sets the node state to fly_to_waypoint.
+ */
 void WaypointNode::mode_init()
 {
     if (get_state_first_loop())
     {
         // Check if cmd is specified
-        if(!cmd.values_set)
+        if (!cmd.values_set)
         {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::event_loop: Node was activated without specifing a command");
-            this->job_finished("WaypointNode::event_loop: Node was activated without specifing a command");
+            RCLCPP_FATAL(this->get_logger(), "WaypointNode::mode_init: Node was activated without specifing a command");
+            this->job_finished("WaypointNode::mode_init: Node was activated without specifing a command");
             return;
         }
 
-        if(cmd.pre_wait_time_ms > 0)
-            // TODO continue here
-            wait_timer->reset(std::chrono::milliseconds(cmd.pre_wait_time_ms));
-        else
-            callback_wait_time();
+        if (cmd.pre_wait_time_ms > 0)
+        {
+            // Set state to pre_wait_time
+            set_node_state(pre_wait_time);
 
+            // Initialize Wait Timer
+            wait_timer = this->create_wall_timer(std::chrono::milliseconds(cmd.pre_wait_time_ms), std::bind(&WaypointNode::callback_wait_time, this));
+        }
+        else
+        {
+            // Skipping pre_wait_time state as it wasn't specified
+            RCLCPP_DEBUG(this->get_logger(), "WaypointNode::mode_init: Skipping pre_wait_time state because no wait time was specified");
+            set_node_state(fly_to_waypoint);
+        }
+    }
+}
+
+void WaypointNode::mode_fly_to_waypoint()
+{
+    if (get_state_first_loop())
+    {
         // TODO send waypoint command
     }
 
-    // TODO check flight path
+    // TODO monitor flight path
+
+    // If drone arrived at waypoint
+    if (cmd.post_wait_time_ms > 0)
+    {
+        // Set state to post_wait_time
+        set_node_state(post_wait_time);
+
+        // Initialize Wait Timer
+        wait_timer = this->create_wall_timer(std::chrono::milliseconds(cmd.post_wait_time_ms), std::bind(&WaypointNode::callback_wait_time, this));
+    }
+    else
+    {
+        // Skipping post_wait_time state as it wasn't specified
+        RCLCPP_DEBUG(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Skipping post_wait_time state because no wait time was specified");
+        this->job_finished();
+        reset_node();
+    }
 }
 
 int main(int argc, char *argv[])

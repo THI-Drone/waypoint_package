@@ -3,7 +3,7 @@
 #include <string>
 #include <cinttypes>
 
-struct command
+struct Command
 {
     bool values_set = false; /// Flag that is true when the values have been set and false when not initialized with values
     std::string target_coordinate_lat;

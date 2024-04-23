@@ -32,7 +32,7 @@ class WaypointNode : public common_lib::CommonNode
 {
 private:
     NodeState_t node_state = init; /// Current state of the node
-    command cmd;                   /// Command that will be executed when active
+    Command cmd;                   /// Command that will be executed when active
     bool state_first_loop = true;  /// If set to true, the first event loop after activating the node is happening. Will be set to false when calling get_state_first_loop().
 
     // Event Loop
@@ -52,6 +52,9 @@ private:
     // Event Loop
     void event_loop();
 
+    // Reset node
+    void reset_node();
+
     // Node State
     void set_node_state(NodeState_t new_state);
     constexpr NodeState_t get_node_state() const
@@ -67,4 +70,5 @@ private:
 
     // Modes
     void mode_init();
+    void mode_fly_to_waypoint();
 };
