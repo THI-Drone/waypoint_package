@@ -9,6 +9,9 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node")
 
     // Initialize Event Loop
     event_loop_timer = this->create_wall_timer(std::chrono::milliseconds(event_loop_time_delta_ms), std::bind(&WaypointNode::event_loop, this));
+
+    // Initialize Wait Timer
+    wait_timer = this->create_wall_timer(std::chrono::milliseconds(0), std::bind(&WaypointNode::callback_wait_time, this));
 }
 
 /**
@@ -35,20 +38,36 @@ void WaypointNode::event_loop()
     if (!this->get_active())
         return;
 
-    if (get_state_first_loop())
-    {
-        // Check if cmd is specified
-        if(!cmd.values_set)
-        {
-            RCLCPP_FATAL(this->get_logger(), "WaypointNode::event_loop: Node was activated without specifing a command");
-            this->job_finished("WaypointNode::event_loop: Node was activated without specifing a command");
-            return;
-        }
+    switch(get_node_state()){
+        case init:
+            mode_init();
+            break;
+        
+        // TODO implement other cases
 
-        // TODO send waypoint command
+        default:
+            RCLCPP_ERROR(this->get_logger(), "WaypointNode::event_loop: Unknown mission_state: %d", get_node_state());
+            this->job_finished("WaypointNode::event_loop: Unknown mission_state");
+    }
+}
+
+/**
+ * @brief Sets the node state to a new value.
+ *
+ * This function sets the node state to the specified new value. If the new value is different from the current node state,
+ * the `state_first_loop` flag is set to true. After updating the node state, a debug message is logged.
+ *
+ * @param new_mission_state The new mission state to set.
+ */
+void WaypointNode::set_node_state(NodeState_t new_state)
+{
+    if (node_state != new_state)
+    {
+        state_first_loop = true;
     }
 
-    // TODO check flight path
+    node_state = new_state;
+    RCLCPP_DEBUG(this->get_logger(), "WaypointNode::set_node_state: Set node state to %d", node_state);
 }
 
 /**
@@ -71,12 +90,15 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
         return;
     }
 
+    // Init node state
+    set_node_state(init);
+    state_first_loop = true;
+
     // Activate or deactivate node based on the message
     if (msg.active != this->get_active())
     {
         if (msg.active)
         {
-            state_first_loop = true;
             this->activate();
         }
         else
@@ -121,6 +143,36 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
 
     if (cmd_json.contains("post_wait_time_ms"))
         cmd.post_wait_time_ms = cmd_json.at("post_wait_time_ms");
+}
+
+void WaypointNode::callback_wait_time()
+{
+    // Check if the mission was aborted during the wait time
+    if(!this->get_active()) return;
+}
+
+void WaypointNode::mode_init()
+{
+    if (get_state_first_loop())
+    {
+        // Check if cmd is specified
+        if(!cmd.values_set)
+        {
+            RCLCPP_FATAL(this->get_logger(), "WaypointNode::event_loop: Node was activated without specifing a command");
+            this->job_finished("WaypointNode::event_loop: Node was activated without specifing a command");
+            return;
+        }
+
+        if(cmd.pre_wait_time_ms > 0)
+            // TODO continue here
+            wait_timer->reset(std::chrono::milliseconds(cmd.pre_wait_time_ms));
+        else
+            callback_wait_time();
+
+        // TODO send waypoint command
+    }
+
+    // TODO check flight path
 }
 
 int main(int argc, char *argv[])
