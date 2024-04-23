@@ -110,7 +110,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
     // Required parameters
     cmd.target_coordinate_lat = cmd_json.at("target_coordinate_lat");
     cmd.target_coordinate_lon = cmd_json.at("target_coordinate_lon");
-    cmd.travel_height_cm = cmd_json.at("travel_height_cm");
+    cmd.cruise_height_cm = cmd_json.at("cruise_height_cm");
     cmd.target_height_cm = cmd_json.at("target_height_cm");
     cmd.horizontal_speed_mps = cmd_json.at("horizontal_speed_mps");
     cmd.vertical_speed_mps = cmd_json.at("vertical_speed_mps");
