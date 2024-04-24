@@ -10,8 +10,8 @@ struct Command
     std::string target_coordinate_lon;
     uint32_t pre_wait_time_ms = 0;
     uint32_t post_wait_time_ms = 0;
-    float cruise_height_cm;
-    float target_height_cm;
+    uint32_t cruise_height_cm;
+    uint32_t target_height_cm;
     float horizontal_speed_mps;
     float vertical_speed_mps;
 };
