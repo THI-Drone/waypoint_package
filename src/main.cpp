@@ -154,7 +154,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg)
     nlohmann::json cmd_json;
     try
     {
-        cmd_json = common_lib::CommandDefinitions::parse_check_json(
+        cmd_json = common_lib::CommandDefinitions::parse_check_json_str(
             msg.payload,
             common_lib::CommandDefinitions::get_waypoint_command_definition());
     }
