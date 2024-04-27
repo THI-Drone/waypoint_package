@@ -4,8 +4,12 @@ using std::placeholders::_1;
 
 WaypointNode::WaypointNode() : CommonNode("waypoint_node")
 {
+    // Create a subscription for the "control" topic
     control_subscription = this->create_subscription<interfaces::msg::Control>(
         "control", 10, std::bind(&WaypointNode::callback_control, this, _1));
+
+    // Create a publisher for the "job_finished" topic
+    fly_to_coord_publisher = this->create_publisher<interfaces::msg::FlyToCoord>("fly_to_coord", 10);
 
     // Initialize Event Loop
     event_loop_timer = this->create_wall_timer(
@@ -279,12 +283,31 @@ void WaypointNode::mode_fly_to_waypoint()
 {
     if (get_state_first_loop())
     {
-        // TODO send waypoint command
+        if (!cmd.values_set)
+        {
+            RCLCPP_ERROR(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: No command specified");
+            this->job_finished("WaypointNode::mode_fly_to_waypoint: No command specified");
+            return;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Started flying to waypoint");
+
+        // TODO send real waypoint command
+        interfaces::msg::FlyToCoord msg;
+        msg.sender_id = this->get_fully_qualified_name();
+        msg.lat = cmd.target_coordinate_lat;
+        msg.lon = cmd.target_coordinate_lon;
+        msg.height_cm = cmd.cruise_height_cm;
+        msg.horz_speed_mps = cmd.horizontal_speed_mps;
+        msg.vert_speed_mps = cmd.vertical_speed_mps;
+        fly_to_coord_publisher->publish(msg);
     }
 
     // TODO monitor flight path
 
     // If drone arrived at waypoint
+    RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Arrived at waypoint");
+
     if (cmd.post_wait_time_ms > 0)
     {
         // Set state to post_wait_time

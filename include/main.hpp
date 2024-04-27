@@ -16,6 +16,7 @@
 // Message includes
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/job_finished.hpp"
+#include "interfaces/msg/fly_to_coord.hpp"
 
 typedef enum NodeState
 {
@@ -41,6 +42,9 @@ private:
     // Event Loop
     const uint32_t event_loop_time_delta_ms = 100;
     rclcpp::TimerBase::SharedPtr event_loop_timer;
+
+    // FlyToCoord
+    rclcpp::Publisher<interfaces::msg::FlyToCoord>::SharedPtr fly_to_coord_publisher; ///< Publisher for the "fly_to_coord" topic
 
     // Wait Timer
     rclcpp::TimerBase::SharedPtr wait_timer;
