@@ -268,7 +268,7 @@ void WaypointNode::mode_init()
         {
             // Skipping pre_wait_time state as it wasn't specified
             RCLCPP_DEBUG(this->get_logger(),
-                         "WaypointNode::mode_init: Skipping pre_wait_time state "
+                         "WaypointNode::mode_init: Skipping 'pre_wait_time' state "
                          "because no wait time was specified");
             set_node_state(fly_to_waypoint);
         }
@@ -299,7 +299,7 @@ void WaypointNode::mode_fly_to_waypoint()
     {
         // Skipping post_wait_time state as it wasn't specified
         RCLCPP_DEBUG(this->get_logger(),
-                     "WaypointNode::mode_fly_to_waypoint: Skipping post_wait_time "
+                     "WaypointNode::mode_fly_to_waypoint: Skipping 'post_wait_time' "
                      "state because no wait time was specified");
         this->job_finished();
         reset_node();
