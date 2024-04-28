@@ -32,26 +32,26 @@ typedef enum NodeState
 class WaypointNode : public common_lib::CommonNode
 {
 private:
-    NodeState_t node_state = init; /// Current state of the node
-    Command cmd;                   /// Command that will be executed when active
-    bool state_first_loop =
-        true; /// If set to true, the first event loop after activating the node
-              /// is happening. Will be set to false when calling
-              /// get_state_first_loop().
+    /// Current state of the node
+    NodeState_t node_state = init;
+    /// Command that will be executed when active
+    Command cmd;
+    /// If set to true, the first event loop after activating the node is happening. Will be set to false when calling get_state_first_loop().
+    bool state_first_loop = true;
 
     // Event Loop
     const uint32_t event_loop_time_delta_ms = 100;
     rclcpp::TimerBase::SharedPtr event_loop_timer;
 
     // FlyToCoord
-    rclcpp::Publisher<interfaces::msg::FlyToCoord>::SharedPtr fly_to_coord_publisher; ///< Publisher for the "fly_to_coord" topic
+    /// Publisher for the "fly_to_coord" topic
+    rclcpp::Publisher<interfaces::msg::FlyToCoord>::SharedPtr fly_to_coord_publisher;
 
     // Wait Timer
     rclcpp::TimerBase::SharedPtr wait_timer;
 
     // Subscriptions
-    rclcpp::Subscription<interfaces::msg::Control>::SharedPtr
-        control_subscription;
+    rclcpp::Subscription<interfaces::msg::Control>::SharedPtr control_subscription;
 
 public:
     WaypointNode();

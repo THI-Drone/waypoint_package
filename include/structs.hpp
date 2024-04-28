@@ -4,8 +4,8 @@
 #include <string>
 
 struct Command {
-  bool values_set = false; /// Flag that is true when the values have been set
-                           /// and false when not initialized with values
+  /// Flag that is true when the values have been set and false when not initialized with values
+  bool values_set = false; 
   double target_coordinate_lat;
   double target_coordinate_lon;
   uint32_t pre_wait_time_ms = 0;
