@@ -9,7 +9,7 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node")
         "control", 10, std::bind(&WaypointNode::callback_control, this, _1));
 
     // Create a publisher for the "job_finished" topic
-    fly_to_coord_publisher = this->create_publisher<interfaces::msg::FlyToCoord>("fly_to_coord", 10);
+    uav_waypoint_command_publisher = this->create_publisher<interfaces::msg::UAVWaypointCommand>("uav_waypoint_command", 10);
 
     // Initialize Event Loop
     event_loop_timer = this->create_wall_timer(
@@ -124,7 +124,7 @@ void WaypointNode::set_node_state(NodeState_t new_state)
 void WaypointNode::callback_control(const interfaces::msg::Control &msg)
 {
     // Ignore messages that don't target this node
-    if (msg.target_id != this->get_fully_qualified_name())
+    if (msg.target_id != this->get_name())
     {
         RCLCPP_DEBUG(this->get_logger(),
                      "WaypointNode::callback_control: Ignored control message not "
@@ -293,14 +293,14 @@ void WaypointNode::mode_fly_to_waypoint()
         RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Started flying to waypoint");
 
         // TODO send real waypoint command
-        interfaces::msg::FlyToCoord msg;
-        msg.sender_id = this->get_fully_qualified_name();
-        msg.lat = cmd.target_coordinate_lat;
-        msg.lon = cmd.target_coordinate_lon;
-        msg.height_cm = cmd.cruise_height_cm;
-        msg.horz_speed_mps = cmd.horizontal_speed_mps;
-        msg.vert_speed_mps = cmd.vertical_speed_mps;
-        fly_to_coord_publisher->publish(msg);
+        // interfaces::msg::FlyToCoord msg;
+        // msg.sender_id = this->get_name();
+        // msg.lat = cmd.target_coordinate_lat;
+        // msg.lon = cmd.target_coordinate_lon;
+        // msg.height_cm = cmd.cruise_height_cm;
+        // msg.horz_speed_mps = cmd.horizontal_speed_mps;
+        // msg.vert_speed_mps = cmd.vertical_speed_mps;
+        // fly_to_coord_publisher->publish(msg);
     }
 
     // TODO monitor flight path

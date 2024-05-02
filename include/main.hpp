@@ -16,7 +16,8 @@
 // Message includes
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/job_finished.hpp"
-#include "interfaces/msg/fly_to_coord.hpp"
+#include "interfaces/msg/waypoint.hpp"
+#include "interfaces/msg/uav_waypoint_command.hpp"
 
 typedef enum NodeState
 {
@@ -44,8 +45,8 @@ private:
     rclcpp::TimerBase::SharedPtr event_loop_timer;
 
     // FlyToCoord
-    /// Publisher for the "fly_to_coord" topic
-    rclcpp::Publisher<interfaces::msg::FlyToCoord>::SharedPtr fly_to_coord_publisher;
+    /// Publisher for the "uav_waypoint_command" topic
+    rclcpp::Publisher<interfaces::msg::UAVWaypointCommand>::SharedPtr uav_waypoint_command_publisher;
 
     // Wait Timer
     rclcpp::TimerBase::SharedPtr wait_timer;
