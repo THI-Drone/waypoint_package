@@ -16,6 +16,7 @@
 // Message includes
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/job_finished.hpp"
+#include "interfaces/msg/gps_position.hpp"
 #include "interfaces/msg/waypoint.hpp"
 #include "interfaces/msg/uav_waypoint_command.hpp"
 
@@ -23,7 +24,9 @@ typedef enum NodeState
 {
     init,
     pre_wait_time,
+    reach_cruise_height,
     fly_to_waypoint,
+    reach_target_height,
     post_wait_time,
 } NodeState_t;
 
@@ -39,12 +42,19 @@ private:
     Command cmd;
     /// If set to true, the first event loop after activating the node is happening. Will be set to false when calling get_state_first_loop().
     bool state_first_loop = true;
+    /// Current position
+    Position pos;
+    /// Maximum age of a position message from FCC bridge
+    static constexpr uint16_t max_position_msg_time_difference_ms = 500;
+
+    // Thresholds
+    /// Height threshold
+    static constexpr uint32_t height_treshold_cm = 50; // cm
 
     // Event Loop
     const uint32_t event_loop_time_delta_ms = 100;
     rclcpp::TimerBase::SharedPtr event_loop_timer;
 
-    // FlyToCoord
     /// Publisher for the "uav_waypoint_command" topic
     rclcpp::Publisher<interfaces::msg::UAVWaypointCommand>::SharedPtr uav_waypoint_command_publisher;
 
@@ -53,6 +63,7 @@ private:
 
     // Subscriptions
     rclcpp::Subscription<interfaces::msg::Control>::SharedPtr control_subscription;
+    rclcpp::Subscription<interfaces::msg::GPSPosition>::SharedPtr gps_position_subscription;
 
 public:
     WaypointNode();
@@ -72,9 +83,15 @@ private:
 
     // Callbacks
     void callback_control(const interfaces::msg::Control &msg);
+    void callback_position(const interfaces::msg::GPSPosition &msg);
     void callback_wait_time();
 
     // Modes
     void mode_init();
+    void mode_reach_cruise_height();
     void mode_fly_to_waypoint();
+    void mode_reach_target_height();
+
+    // Check cmd is valid
+    bool check_cmd(const char* function_name);
 };
