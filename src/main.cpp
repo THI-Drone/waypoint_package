@@ -226,6 +226,9 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg)
     if (timestamp_now - rclcpp::Time(msg.time_stamp) >
         rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(max_position_msg_time_difference_ms)))
     {
+        // Reset pos as we can no longer know where we are
+        pos = Position();
+
         if (this->get_active())
         {
             RCLCPP_FATAL(
@@ -350,6 +353,13 @@ void WaypointNode::mode_init()
     }
 }
 
+/**
+ * @brief Executes the reach cruise height mode of the WaypointNode.
+ *
+ * This function is responsible for reaching the cruise height specified in the command.
+ * It sends a waypoint command with the new height to the UAV and checks if the drone has arrived at the cruising height.
+ * If the drone has arrived, it sets the node state to fly_to_waypoint.
+ */
 void WaypointNode::mode_reach_cruise_height()
 {
     if (get_state_first_loop())
@@ -419,6 +429,14 @@ void WaypointNode::mode_fly_to_waypoint()
     set_node_state(reach_target_height);
 }
 
+/**
+ * @brief Executes the "mode_reach_target_height" mode of the WaypointNode.
+ *
+ * This function is responsible for reaching the target height specified in the command.
+ * It sends a waypoint command with the new height to the UAV and waits until the target height is reached.
+ * Once the target height is reached, it either transitions to the "post_wait_time" state or finishes the job,
+ * depending on whether a post wait time was specified in the command.
+ */
 void WaypointNode::mode_reach_target_height()
 {
     if (get_state_first_loop())
