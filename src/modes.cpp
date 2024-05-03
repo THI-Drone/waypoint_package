@@ -78,7 +78,7 @@ void WaypointNode::mode_reach_cruise_height() {
         interfaces::msg::Waypoint waypoint_msg;
         waypoint_msg.latitude_deg = pos.coordinate_lat;
         waypoint_msg.longitude_deg = pos.coordinate_lon;
-        waypoint_msg.relative_altitude_m = cmd.cruise_height_cm;
+        waypoint_msg.relative_altitude_m = cmd.cruise_height_cm / 100.0;
 
         interfaces::msg::UAVWaypointCommand msg;
         msg.sender_id = this->get_name();
@@ -117,7 +117,7 @@ void WaypointNode::mode_fly_to_waypoint() {
         interfaces::msg::Waypoint waypoint_msg;
         waypoint_msg.latitude_deg = cmd.target_coordinate_lat;
         waypoint_msg.longitude_deg = cmd.target_coordinate_lon;
-        waypoint_msg.relative_altitude_m = cmd.cruise_height_cm;
+        waypoint_msg.relative_altitude_m = cmd.cruise_height_cm / 100.0;
 
         interfaces::msg::UAVWaypointCommand msg;
         msg.sender_id = this->get_name();
@@ -164,7 +164,7 @@ void WaypointNode::mode_reach_target_height() {
         interfaces::msg::Waypoint waypoint_msg;
         waypoint_msg.latitude_deg = pos.coordinate_lat;
         waypoint_msg.longitude_deg = pos.coordinate_lon;
-        waypoint_msg.relative_altitude_m = cmd.target_height_cm;
+        waypoint_msg.relative_altitude_m = cmd.target_height_cm / 100.0;
 
         interfaces::msg::UAVWaypointCommand msg;
         msg.sender_id = this->get_name();
