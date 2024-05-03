@@ -13,7 +13,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "structs.hpp"
 
-
 // Message includes
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/gps_position.hpp"
@@ -21,7 +20,6 @@
 #include "interfaces/msg/mission_progress.hpp"
 #include "interfaces/msg/uav_waypoint_command.hpp"
 #include "interfaces/msg/waypoint.hpp"
-
 
 typedef enum NodeState {
     init,
