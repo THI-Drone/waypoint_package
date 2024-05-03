@@ -1,6 +1,5 @@
 #pragma once
 
-#include "rclcpp/rclcpp.hpp"
 #include <chrono>
 #include <functional>
 #include <map>
@@ -11,18 +10,20 @@
 
 #include "common_package/commands.hpp"
 #include "common_package/common_node.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "structs.hpp"
+
 
 // Message includes
 #include "interfaces/msg/control.hpp"
-#include "interfaces/msg/job_finished.hpp"
 #include "interfaces/msg/gps_position.hpp"
+#include "interfaces/msg/job_finished.hpp"
 #include "interfaces/msg/mission_progress.hpp"
-#include "interfaces/msg/waypoint.hpp"
 #include "interfaces/msg/uav_waypoint_command.hpp"
+#include "interfaces/msg/waypoint.hpp"
 
-typedef enum NodeState
-{
+
+typedef enum NodeState {
     init,
     pre_wait_time,
     reach_cruise_height,
@@ -34,47 +35,54 @@ typedef enum NodeState
 /**
  * @brief A class for the waypoint node.
  */
-class WaypointNode : public common_lib::CommonNode
-{
-private:
-    /// Current state of the node
-    NodeState_t node_state = init;
-    /// Command that will be executed when active
-    Command cmd;
-    /// If set to true, the first event loop after activating the node is happening. Will be set to false when calling get_state_first_loop().
-    bool state_first_loop = true;
-    /// Current position
-    Position pos;
-    /// Maximum age of a position message from FCC bridge
-    static constexpr uint16_t max_position_msg_time_difference_ms = 100;
-    /// Maximum age of a progress message from FCC bridge
-    static constexpr uint16_t max_progress_msg_time_difference_ms = 500;
-    /// Current mission progress
-    float mission_progress = 0.0;
+class WaypointNode : public common_lib::CommonNode {
+   private:
+    NodeState_t node_state = init;  //!< Current state of the node
+
+    Command cmd;  //!< Command that will be executed when active
+
+    bool state_first_loop =
+        true;  //!< If set to true, the first event loop after activating the
+               //!< node is happening. Will be set to false when calling
+               //!< get_state_first_loop().
+
+    Position pos;  //!< Current position
+
+    static constexpr uint16_t max_position_msg_time_difference_ms =
+        100;  //!< Maximum age of a position message from FCC bridge
+
+    static constexpr uint16_t max_progress_msg_time_difference_ms =
+        500;  //!< Maximum age of a progress message from FCC bridge
+
+    float mission_progress = 0.0;  //!< Current mission progress
 
     // Thresholds
-    /// Height threshold
-    static constexpr uint32_t height_treshold_cm = 50; // cm
+    static constexpr uint32_t height_treshold_cm =
+        50;  //!< Height threshold in cm
 
     // Event Loop
     const uint32_t event_loop_time_delta_ms = 100;
     rclcpp::TimerBase::SharedPtr event_loop_timer;
 
-    /// Publisher for the "uav_waypoint_command" topic
-    rclcpp::Publisher<interfaces::msg::UAVWaypointCommand>::SharedPtr uav_waypoint_command_publisher;
+    // Publisher for the "uav_waypoint_command" topic
+    rclcpp::Publisher<interfaces::msg::UAVWaypointCommand>::SharedPtr
+        uav_waypoint_command_publisher;
 
     // Wait Timer
     rclcpp::TimerBase::SharedPtr wait_timer;
 
     // Subscriptions
-    rclcpp::Subscription<interfaces::msg::Control>::SharedPtr control_subscription;
-    rclcpp::Subscription<interfaces::msg::GPSPosition>::SharedPtr gps_position_subscription;
-    rclcpp::Subscription<interfaces::msg::MissionProgress>::SharedPtr mission_progress_subscription;
+    rclcpp::Subscription<interfaces::msg::Control>::SharedPtr
+        control_subscription;
+    rclcpp::Subscription<interfaces::msg::GPSPosition>::SharedPtr
+        gps_position_subscription;
+    rclcpp::Subscription<interfaces::msg::MissionProgress>::SharedPtr
+        mission_progress_subscription;
 
-public:
+   public:
     WaypointNode();
 
-private:
+   private:
     // Event Loop
     void event_loop();
 
@@ -103,5 +111,5 @@ private:
     void mode_reach_target_height();
 
     // Check cmd is valid
-    bool check_cmd(const char* function_name);
+    bool check_cmd(const char *function_name);
 };

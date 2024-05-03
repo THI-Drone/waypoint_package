@@ -19,7 +19,11 @@ find_package(common_package REQUIRED)
 
 include_directories(include)
 
-add_executable(waypoint_node src/main.cpp)
+add_executable(waypoint_node
+               src/callbacks.cpp
+               src/modes.cpp
+               src/main.cpp
+               )
 ament_target_dependencies(waypoint_node rclcpp interfaces common_package nlohmann_json)
 
 install (TARGETS
