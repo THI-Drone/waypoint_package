@@ -17,6 +17,7 @@
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/job_finished.hpp"
 #include "interfaces/msg/gps_position.hpp"
+#include "interfaces/msg/mission_progress.hpp"
 #include "interfaces/msg/waypoint.hpp"
 #include "interfaces/msg/uav_waypoint_command.hpp"
 
@@ -45,7 +46,11 @@ private:
     /// Current position
     Position pos;
     /// Maximum age of a position message from FCC bridge
-    static constexpr uint16_t max_position_msg_time_difference_ms = 500;
+    static constexpr uint16_t max_position_msg_time_difference_ms = 100;
+    /// Maximum age of a progress message from FCC bridge
+    static constexpr uint16_t max_progress_msg_time_difference_ms = 500;
+    /// Current mission progress
+    float mission_progress = 0.0;
 
     // Thresholds
     /// Height threshold
@@ -64,6 +69,7 @@ private:
     // Subscriptions
     rclcpp::Subscription<interfaces::msg::Control>::SharedPtr control_subscription;
     rclcpp::Subscription<interfaces::msg::GPSPosition>::SharedPtr gps_position_subscription;
+    rclcpp::Subscription<interfaces::msg::MissionProgress>::SharedPtr mission_progress_subscription;
 
 public:
     WaypointNode();
@@ -81,9 +87,13 @@ private:
 
     bool get_state_first_loop();
 
+    // Mission Progress
+    bool current_mission_finished();
+
     // Callbacks
     void callback_control(const interfaces::msg::Control &msg);
     void callback_position(const interfaces::msg::GPSPosition &msg);
+    void callback_mission_progress(const interfaces::msg::MissionProgress &msg);
     void callback_wait_time();
 
     // Modes

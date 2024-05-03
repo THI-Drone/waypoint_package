@@ -8,11 +8,15 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node")
     control_subscription = this->create_subscription<interfaces::msg::Control>(
         "control", 10, std::bind(&WaypointNode::callback_control, this, _1));
 
-    // Create a subscription for the "gps_position" topic
+    // Create a subscription for the "uav_gps_position" topic
     gps_position_subscription = this->create_subscription<interfaces::msg::GPSPosition>(
         "uav_gps_position", 10, std::bind(&WaypointNode::callback_position, this, _1));
 
-    // Create a publisher for the "job_finished" topic
+    // Create a subscription for the "uav_mission_progress" topic
+    mission_progress_subscription = this->create_subscription<interfaces::msg::MissionProgress>(
+        "uav_mission_progress", 10, std::bind(&WaypointNode::callback_mission_progress, this, _1));
+
+    // Create a publisher for the "uav_waypoint_command" topic
     uav_waypoint_command_publisher = this->create_publisher<interfaces::msg::UAVWaypointCommand>("uav_waypoint_command", 10);
 
     // Initialize Event Loop
@@ -42,17 +46,35 @@ bool WaypointNode::get_state_first_loop()
 }
 
 /**
+ * Checks if the current mission is finished.
+ *
+ * @return true if the mission is finished, false otherwise.
+ */
+bool WaypointNode::current_mission_finished()
+{
+    if (mission_progress >= 1.0)
+    {
+        mission_progress = 0.0;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+/**
  * @brief Executes the event loop for the WaypointNode.
  *
  * This function is responsible for executing the event loop of the WaypointNode
  * class. It checks the node state and performs the corresponding actions based
  * on the state. The possible states are:
  * - init: Initializes the mode.
- * - pre_wait_time: Does nothing.
- * - reach_cruise_height: Checks if drone is already at cruise altitude, otherwise it will fly to the new altitude.
+ * - pre_wait_time: Wait a predefined time.
+ * - reach_cruise_height: Fly drone to the crusing height.
  * - fly_to_waypoint: Executes the mode to fly to the waypoint.
- * - reach_target_height: Checks if drone is already at target altitude, otherwise it will fly to the new altitude.
- * - post_wait_time: Does nothing.
+ * - reach_target_height: Fly drone to the target height.
+ * - post_wait_time: Wait a predefined time.
  *
  * If the node state is unknown, an error message is logged and a job_finished
  * error message is sent.
@@ -94,12 +116,13 @@ void WaypointNode::event_loop()
  *
  * This function resets the state of the `WaypointNode` object for the next
  * command. It sets the node state to `init`, sets the `state_first_loop` flag
- * to `true`, and clears the `cmd` object.
+ * to `true`, resets the `mission_progress` to 0, and clears the `cmd` object.
  */
 void WaypointNode::reset_node()
 {
     set_node_state(init);
     state_first_loop = true;
+    mission_progress = 0.0;
     cmd = Command();
 }
 
@@ -109,6 +132,7 @@ void WaypointNode::reset_node()
  * This function sets the node state to the specified new value. If the new
  * value is different from the current node state, the `state_first_loop` flag
  * is set to true. After updating the node state, a debug message is logged.
+ * Additionally, `mission_progress` is reset to 0.
  *
  * @param new_mission_state The new mission state to set.
  */
@@ -119,6 +143,7 @@ void WaypointNode::set_node_state(NodeState_t new_state)
         state_first_loop = true;
     }
 
+    mission_progress = 0.0;
     node_state = new_state;
     RCLCPP_DEBUG(this->get_logger(),
                  "WaypointNode::set_node_state: Set node state to %d",
@@ -226,7 +251,7 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg)
     if (timestamp_now - rclcpp::Time(msg.time_stamp) >
         rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(max_position_msg_time_difference_ms)))
     {
-        // Reset pos as we can no longer know where we are
+        // Reset pos as we can no longer reliabely know where we are
         pos = Position();
 
         if (this->get_active())
@@ -240,6 +265,7 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg)
         }
         else
         {
+            // Warn but still store values
             RCLCPP_WARN(
                 get_logger(),
                 "MissionControl::callback_position: Received too old timestamp in position message: %s",
@@ -252,6 +278,42 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg)
     pos.coordinate_lat = msg.latitude_deg;
     pos.coordinate_lon = msg.longitude_deg;
     pos.height_cm = msg.relative_altitude_m * 100.0;
+}
+
+/**
+ * @brief Callback function for receiving mission progress messages.
+ *
+ * This function is called when a mission progress message is received. It updates the mission progress
+ * of the WaypointNode based on the received message.
+ *
+ * @param msg The mission progress message received.
+ */
+void WaypointNode::callback_mission_progress(const interfaces::msg::MissionProgress &msg)
+{
+    // Ignore message if node is not active
+    if (!this->get_active())
+        return;
+
+    RCLCPP_DEBUG(
+        this->get_logger(),
+        "WaypointNode::callback_mission_progress: Received mission progress from '%s': progress: %f / 1.0", msg.sender_id.c_str(), msg.progress);
+
+    // Check timestamp
+    rclcpp::Time timestamp_now = this->now();
+    if (timestamp_now - rclcpp::Time(msg.time_stamp) >
+        rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(max_progress_msg_time_difference_ms)))
+    {
+        // Warn and ignore message
+        RCLCPP_WARN(
+            get_logger(),
+            "MissionControl::callback_mission_progress: Received too old timestamp in progress message: %s. Ignoring message.",
+            msg.sender_id.c_str());
+
+        return;
+    }
+
+    // Store value
+    mission_progress = msg.progress;
 }
 
 /**
@@ -364,6 +426,7 @@ void WaypointNode::mode_reach_cruise_height()
 {
     if (get_state_first_loop())
     {
+        // Check that command and position are specified
         if (!check_cmd("mode_reach_cruise_height"))
         {
             return;
@@ -371,7 +434,7 @@ void WaypointNode::mode_reach_cruise_height()
 
         RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_reach_cruise_height: Started reaching cruise height");
 
-        // Send waypoint command with new height
+        // Send waypoint command with new height and current position
         interfaces::msg::Waypoint waypoint_msg;
         waypoint_msg.latitude_deg = pos.coordinate_lat;
         waypoint_msg.longitude_deg = pos.coordinate_lon;
@@ -384,11 +447,12 @@ void WaypointNode::mode_reach_cruise_height()
         msg.waypoint = waypoint_msg;
 
         uav_waypoint_command_publisher->publish(msg);
+
+        // Make sure that no old progress makes this function think it already finished the mission
+        mission_progress = 0.0;
     }
 
-    uint32_t height_difference_cm = pos.height_cm - cmd.cruise_height_cm;
-
-    if (height_difference_cm <= height_treshold_cm)
+    if (current_mission_finished())
     {
         // Drone arrived at crusing height
         RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_reach_cruise_height: Arrived at crusing height");
@@ -400,6 +464,7 @@ void WaypointNode::mode_fly_to_waypoint()
 {
     if (get_state_first_loop())
     {
+        // Check that command and position are specified
         if (!check_cmd("mode_fly_to_waypoint"))
         {
             return;
@@ -420,13 +485,17 @@ void WaypointNode::mode_fly_to_waypoint()
         msg.waypoint = waypoint_msg;
 
         uav_waypoint_command_publisher->publish(msg);
+
+        // Make sure that no old progress makes this function think it already finished the mission
+        mission_progress = 0.0;
     }
 
-    // TODO monitor flight path
-
-    // If drone arrived at waypoint
-    RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Arrived at waypoint");
-    set_node_state(reach_target_height);
+    if (current_mission_finished())
+    {
+        // Drone arrived at waypoint
+        RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_fly_to_waypoint: Arrived at waypoint");
+        set_node_state(reach_target_height);
+    }
 }
 
 /**
@@ -441,6 +510,7 @@ void WaypointNode::mode_reach_target_height()
 {
     if (get_state_first_loop())
     {
+        // Check that command and position are specified
         if (!check_cmd("mode_reach_target_height"))
         {
             return;
@@ -448,7 +518,7 @@ void WaypointNode::mode_reach_target_height()
 
         RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_reach_target_height: Started reaching target height");
 
-        // Send waypoint command with new height
+        // Send waypoint command with new height and current position
         interfaces::msg::Waypoint waypoint_msg;
         waypoint_msg.latitude_deg = pos.coordinate_lat;
         waypoint_msg.longitude_deg = pos.coordinate_lon;
@@ -461,11 +531,12 @@ void WaypointNode::mode_reach_target_height()
         msg.waypoint = waypoint_msg;
 
         uav_waypoint_command_publisher->publish(msg);
+
+        // Make sure that no old progress makes this function think it already finished the mission
+        mission_progress = 0.0;
     }
 
-    uint32_t height_difference_cm = pos.height_cm - cmd.cruise_height_cm;
-
-    if (height_difference_cm <= height_treshold_cm)
+    if (current_mission_finished())
     {
         // Reached target height
         RCLCPP_INFO(this->get_logger(), "WaypointNode::mode_reach_target_height: Arrived at target height");
