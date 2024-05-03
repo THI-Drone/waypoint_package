@@ -100,7 +100,7 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
 
         if (this->get_active()) {
             RCLCPP_FATAL(get_logger(),
-                         "MissionControl::callback_position: Received too old "
+                         "WaypointNode::callback_position: Received too old "
                          "timestamp in position message: %s. Aborting Job.",
                          msg.sender_id.c_str());
             this->job_finished(
@@ -110,7 +110,7 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
         } else {
             // Warn but still store values
             RCLCPP_WARN(get_logger(),
-                        "MissionControl::callback_position: Received too old "
+                        "WaypointNode::callback_position: Received too old "
                         "timestamp in position message: %s",
                         msg.sender_id.c_str());
         }
@@ -149,7 +149,7 @@ void WaypointNode::callback_mission_progress(
             max_progress_msg_time_difference_ms))) {
         // Warn and ignore message
         RCLCPP_WARN(get_logger(),
-                    "MissionControl::callback_mission_progress: Received too "
+                    "WaypointNode::callback_mission_progress: Received too "
                     "old timestamp in progress message: %s. Ignoring message.",
                     msg.sender_id.c_str());
 
