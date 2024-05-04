@@ -5,24 +5,25 @@ using std::placeholders::_1;
 WaypointNode::WaypointNode() : CommonNode("waypoint_node") {
     // Create a subscription for the "control" topic
     control_subscription = this->create_subscription<interfaces::msg::Control>(
-        "control", 10, std::bind(&WaypointNode::callback_control, this, _1));
+        common_lib::topic_names::Control, 10,
+        std::bind(&WaypointNode::callback_control, this, _1));
 
     // Create a subscription for the "uav_gps_position" topic
     gps_position_subscription =
         this->create_subscription<interfaces::msg::GPSPosition>(
-            "uav_gps_position", 10,
+            common_lib::topic_names::GPSPosition, 10,
             std::bind(&WaypointNode::callback_position, this, _1));
 
     // Create a subscription for the "uav_mission_progress" topic
     mission_progress_subscription =
         this->create_subscription<interfaces::msg::MissionProgress>(
-            "uav_mission_progress", 10,
+            common_lib::topic_names::MissionProgress, 10,
             std::bind(&WaypointNode::callback_mission_progress, this, _1));
 
     // Create a publisher for the "uav_waypoint_command" topic
     uav_waypoint_command_publisher =
         this->create_publisher<interfaces::msg::UAVWaypointCommand>(
-            "uav_waypoint_command", 10);
+            common_lib::topic_names::UAVWaypointCommand, 10);
 
     // Initialize Event Loop
     event_loop_timer = this->create_wall_timer(
