@@ -16,10 +16,10 @@ void WaypointNode::mode_init() {
         if (!cmd.values_set) {
             RCLCPP_FATAL(this->get_logger(),
                          "WaypointNode::mode_init: Node was "
-                         "activated without specifing a command");
+                         "activated without specifying a command");
             this->job_finished(
                 "WaypointNode::mode_init: Node was activated without "
-                "specifing a command");
+                "specifying a command");
             reset_node();
             return;
         }
@@ -28,10 +28,10 @@ void WaypointNode::mode_init() {
         if (!pos.values_set) {
             RCLCPP_FATAL(this->get_logger(),
                          "WaypointNode::mode_init: Node was "
-                         "activated without receiving a position before");
+                         "activated without receiving a position");
             this->job_finished(
                 "WaypointNode::mode_init: Node was activated without "
-                "receiving a position before");
+                "receiving a position");
             reset_node();
             return;
         }

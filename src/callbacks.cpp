@@ -12,10 +12,9 @@
 void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
     // Ignore messages that don't target this node
     if (msg.target_id != this->get_name()) {
-        RCLCPP_DEBUG(
-            this->get_logger(),
-            "WaypointNode::callback_control: Ignored control message not "
-            "targeted for this node");
+        RCLCPP_DEBUG(this->get_logger(),
+                     "WaypointNode::callback_control: Ignored control message, "
+                     "as it was not targeted for this node");
         return;
     }
 
@@ -37,6 +36,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
         return;
     }
 
+    // Parse payload
     nlohmann::json cmd_json;
     try {
         cmd_json = common_lib::CommandDefinitions::parse_check_json_str(
@@ -54,7 +54,7 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
         return;
     }
 
-    // Set flag to true to indicate that the object has real values in it
+    // Set flag to true to indicate that the object has values in it
     cmd.values_set = true;
 
     // Required parameters
@@ -95,10 +95,14 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
     if (timestamp_now - rclcpp::Time(msg.time_stamp) >
         rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(
             max_position_msg_time_difference_ms))) {
+        // Message is too old, react based on the current 'active' state
+
         // Reset pos as we can no longer reliabely know where we are
         pos = Position();
 
         if (this->get_active()) {
+            // Abort job if currently active
+
             RCLCPP_FATAL(get_logger(),
                          "WaypointNode::callback_position: Received too old "
                          "timestamp in position message: %s. Aborting Job.",
@@ -109,6 +113,7 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
             reset_node();
         } else {
             // Warn but still store values
+
             RCLCPP_WARN(get_logger(),
                         "WaypointNode::callback_position: Received too old "
                         "timestamp in position message: %s",

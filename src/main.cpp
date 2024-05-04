@@ -86,7 +86,7 @@ void WaypointNode::event_loop() {
             mode_init();
             break;
         case pre_wait_time:
-            break;  // Do nothing
+            break;  // Wait for the `wait_timer` to trigger
         case reach_cruise_height:
             mode_reach_cruise_height();
             break;
@@ -97,7 +97,7 @@ void WaypointNode::event_loop() {
             mode_reach_target_height();
             break;
         case post_wait_time:
-            break;  // Do nothing
+            break;  // Wait for the `wait_timer` to trigger
         default:
             RCLCPP_ERROR(this->get_logger(),
                          "WaypointNode::event_loop: Unknown mission_state: %d",
@@ -157,21 +157,33 @@ void WaypointNode::set_node_state(NodeState_t new_state) {
  */
 bool WaypointNode::check_cmd(const char *function_name) {
     if (!cmd.values_set) {
+        // Cancel job and reset node
+
         RCLCPP_FATAL(this->get_logger(),
-                     "WaypointNode::%s::check_cmd: No command specified",
+                     "WaypointNode::%s::check_cmd: No command specified. "
+                     "Aborting job and resetting node.",
                      function_name);
+
         this->job_finished("WaypointNode::" + (std::string)function_name +
-                           "::check_cmd: No command specified");
+                           "::check_cmd: No command specified. Aborting job "
+                           "and resetting node.");
+
         reset_node();
         return false;
     }
 
     if (!pos.values_set) {
+        // Cancel job and reset node
+
         RCLCPP_FATAL(this->get_logger(),
-                     "WaypointNode::%s::check_cmd: No position received before",
+                     "WaypointNode::%s::check_cmd: No position received."
+                     " Aborting job and resetting node.",
                      function_name);
+
         this->job_finished("WaypointNode::" + (std::string)function_name +
-                           "::check_cmd: No position received before");
+                           "::check_cmd: No position received. Aborting "
+                           "job and resetting node.");
+
         reset_node();
         return false;
     }
