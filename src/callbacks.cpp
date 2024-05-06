@@ -13,8 +13,9 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
     // Ignore messages that don't target this node
     if (msg.target_id != this->get_name()) {
         RCLCPP_DEBUG(this->get_logger(),
-                     "WaypointNode::callback_control: Ignored control message, "
-                     "as it was not targeted for this node");
+                     "WaypointNode::%s: Ignored control message, "
+                     "as it was not targeted for this node",
+                     __func__);
         return;
     }
 
@@ -44,12 +45,14 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
             common_lib::CommandDefinitions::get_waypoint_command_definition());
     } catch (const std::runtime_error &e) {
         RCLCPP_FATAL(this->get_logger(),
-                     "WaypointNode::callback_control: Received invalid json as "
+                     "WaypointNode::%s: Received invalid json as "
                      "payload: %s",
-                     e.what());
-        this->job_finished((std::string) "WaypointNode::callback_control: Received "
-                                         "invalid json as payload: " +
-                           e.what());
+                     __func__, e.what());
+        this->job_finished(
+            (std::string) "WaypointNode::" + (std::string) __func__ +
+            ": Received "
+            "invalid json as payload: " +
+            e.what());
         reset_node();
         return;
     }
@@ -84,14 +87,16 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
  * height information.
  */
 void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
+    // Store current timestamp for later
+    rclcpp::Time timestamp_now = this->now();
+
     RCLCPP_DEBUG(this->get_logger(),
-                 "WaypointNode::callback_position: Received position from "
+                 "WaypointNode::%s: Received position from "
                  "'%s': lat: %f, lon: %f, height: %f",
-                 msg.sender_id.c_str(), msg.latitude_deg, msg.longitude_deg,
-                 msg.relative_altitude_m);
+                 __func__, msg.sender_id.c_str(), msg.latitude_deg,
+                 msg.longitude_deg, msg.relative_altitude_m);
 
     // Check timestamp
-    rclcpp::Time timestamp_now = this->now();
     if (timestamp_now - rclcpp::Time(msg.time_stamp) >
         rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(
             max_position_msg_time_difference_ms))) {
@@ -104,20 +109,21 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
             // Abort job if currently active
 
             RCLCPP_FATAL(get_logger(),
-                         "WaypointNode::callback_position: Received too old "
+                         "WaypointNode::%s: Received too old "
                          "timestamp in position message: %s. Aborting Job.",
-                         msg.sender_id.c_str());
-            this->job_finished(
-                "A too old timestamp was received in a position message while "
-                "being active");
+                         __func__, msg.sender_id.c_str());
+            this->job_finished("WaypointNode::" + (std::string) __func__ +
+                               ": A too old timestamp was received in a "
+                               "position message while "
+                               "being active");
             reset_node();
         } else {
             // Warn but still store values
 
             RCLCPP_WARN(get_logger(),
-                        "WaypointNode::callback_position: Received too old "
+                        "WaypointNode::%s: Received too old "
                         "timestamp in position message: %s",
-                        msg.sender_id.c_str());
+                        __func__, msg.sender_id.c_str());
         }
     }
 
@@ -139,24 +145,27 @@ void WaypointNode::callback_position(const interfaces::msg::GPSPosition &msg) {
  */
 void WaypointNode::callback_mission_progress(
     const interfaces::msg::MissionProgress &msg) {
+    // Store current timestamp for later
+    rclcpp::Time timestamp_now = this->now();
+
     // Ignore message if node is not active
     if (!this->get_active()) return;
 
     RCLCPP_DEBUG(this->get_logger(),
-                 "WaypointNode::callback_mission_progress: Received mission "
+                 "WaypointNode::%s: Received mission "
                  "progress from '%s': progress: %f / 1.0",
-                 msg.sender_id.c_str(), msg.progress);
+                 __func__, msg.sender_id.c_str(), msg.progress);
 
     // Check timestamp
-    rclcpp::Time timestamp_now = this->now();
     if (timestamp_now - rclcpp::Time(msg.time_stamp) >
         rclcpp::Duration(std::chrono::duration<int64_t, std::milli>(
             max_progress_msg_time_difference_ms))) {
         // Warn
-        RCLCPP_WARN(get_logger(),
-                    "WaypointNode::callback_mission_progress: Received too "
-                    "old timestamp in progress message: %s.",
-                    msg.sender_id.c_str());
+        RCLCPP_WARN(
+            get_logger(),
+            "WaypointNode::%s: Received too "
+            "old timestamp in progress message: %s. Using value regardless.",
+            __func__, msg.sender_id.c_str());
     }
 
     // Store value
@@ -192,12 +201,15 @@ void WaypointNode::callback_wait_time() {
             break;
         default:
             RCLCPP_FATAL(this->get_logger(),
-                         "WaypointNode::callback_wait_time: Node has incorrect "
+                         "WaypointNode::%s: Node has incorrect "
                          "state: %d",
-                         get_node_state());
+                         __func__, get_node_state());
             this->job_finished(
-                "WaypointNode::callback_wait_time: Node has incorrect state: " +
-                get_node_state());
+                "WaypointNode::" + (std::string) __func__ +
+                ": Node has incorrect state: " +
+                std::to_string(
+                    get_node_state()));  // TODO ouput node state as string
+
             reset_node();
             return;
     }

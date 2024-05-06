@@ -15,11 +15,13 @@ void WaypointNode::mode_init() {
         // Check if cmd is specified
         if (!cmd.values_set) {
             RCLCPP_FATAL(this->get_logger(),
-                         "WaypointNode::mode_init: Node was "
-                         "activated without specifying a command");
-            this->job_finished(
-                "WaypointNode::mode_init: Node was activated without "
-                "specifying a command");
+                         "WaypointNode::%s: Node was "
+                         "activated without specifying a command",
+                         __func__);
+            this->job_finished("WaypointNode::" + (std::string) __func__ +
+                               ": Node was activated without "
+                               "specifying a command");
+
             reset_node();
             return;
         }
@@ -27,11 +29,13 @@ void WaypointNode::mode_init() {
         // Check if pos is specified
         if (!pos.values_set) {
             RCLCPP_FATAL(this->get_logger(),
-                         "WaypointNode::mode_init: Node was "
-                         "activated without receiving a position");
-            this->job_finished(
-                "WaypointNode::mode_init: Node was activated without "
-                "receiving a position");
+                         "WaypointNode::%s: Node was "
+                         "activated without receiving a position",
+                         __func__);
+            this->job_finished("WaypointNode::" + (std::string) __func__ +
+                               ": Node was activated without "
+                               "receiving a position");
+
             reset_node();
             return;
         }
@@ -46,10 +50,11 @@ void WaypointNode::mode_init() {
                 std::bind(&WaypointNode::callback_wait_time, this));
         } else {
             // Skipping pre_wait_time state as it wasn't specified
-            RCLCPP_DEBUG(
-                this->get_logger(),
-                "WaypointNode::mode_init: Skipping 'pre_wait_time' state "
-                "because no wait time was specified");
+            RCLCPP_DEBUG(this->get_logger(),
+                         "WaypointNode::%s: Skipping 'pre_wait_time' state "
+                         "because no wait time was specified",
+                         __func__);
+
             set_node_state(reach_cruise_height);
         }
     }
@@ -66,13 +71,14 @@ void WaypointNode::mode_init() {
 void WaypointNode::mode_reach_cruise_height() {
     if (get_state_first_loop()) {
         // Check that command and position are specified
-        if (!check_cmd("mode_reach_cruise_height")) {
+        if (!check_cmd(__func__)) {
             return;
         }
 
         RCLCPP_INFO(this->get_logger(),
-                    "WaypointNode::mode_reach_cruise_height: Started reaching "
-                    "cruise height");
+                    "WaypointNode::%s: Started reaching "
+                    "cruise height",
+                    __func__);
 
         // Send waypoint command with new height and current position
         interfaces::msg::Waypoint waypoint_msg;
@@ -96,8 +102,10 @@ void WaypointNode::mode_reach_cruise_height() {
     if (current_mission_finished()) {
         // Drone arrived at crusing height
         RCLCPP_INFO(this->get_logger(),
-                    "WaypointNode::mode_reach_cruise_height: Arrived at "
-                    "crusing height");
+                    "WaypointNode::%s: Arrived at "
+                    "crusing height",
+                    __func__);
+
         set_node_state(fly_to_waypoint);
     }
 }
@@ -105,13 +113,12 @@ void WaypointNode::mode_reach_cruise_height() {
 void WaypointNode::mode_fly_to_waypoint() {
     if (get_state_first_loop()) {
         // Check that command and position are specified
-        if (!check_cmd("mode_fly_to_waypoint")) {
+        if (!check_cmd(__func__)) {
             return;
         }
 
-        RCLCPP_INFO(
-            this->get_logger(),
-            "WaypointNode::mode_fly_to_waypoint: Started flying to waypoint");
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: Started flying to waypoint", __func__);
 
         // Send waypoint command
         interfaces::msg::Waypoint waypoint_msg;
@@ -134,8 +141,9 @@ void WaypointNode::mode_fly_to_waypoint() {
 
     if (current_mission_finished()) {
         // Drone arrived at waypoint
-        RCLCPP_INFO(this->get_logger(),
-                    "WaypointNode::mode_fly_to_waypoint: Arrived at waypoint");
+        RCLCPP_INFO(this->get_logger(), "WaypointNode::%s: Arrived at waypoint",
+                    __func__);
+
         set_node_state(reach_target_height);
     }
 }
@@ -152,13 +160,14 @@ void WaypointNode::mode_fly_to_waypoint() {
 void WaypointNode::mode_reach_target_height() {
     if (get_state_first_loop()) {
         // Check that command and position are specified
-        if (!check_cmd("mode_reach_target_height")) {
+        if (!check_cmd(__func__)) {
             return;
         }
 
         RCLCPP_INFO(this->get_logger(),
-                    "WaypointNode::mode_reach_target_height: Started reaching "
-                    "target height");
+                    "WaypointNode::%s: Started reaching "
+                    "target height",
+                    __func__);
 
         // Send waypoint command with new height and current position
         interfaces::msg::Waypoint waypoint_msg;
@@ -181,9 +190,8 @@ void WaypointNode::mode_reach_target_height() {
 
     if (current_mission_finished()) {
         // Reached target height
-        RCLCPP_INFO(
-            this->get_logger(),
-            "WaypointNode::mode_reach_target_height: Arrived at target height");
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: Arrived at target height", __func__);
 
         if (cmd.post_wait_time_ms > 0) {
             // Set state to post_wait_time
@@ -196,9 +204,11 @@ void WaypointNode::mode_reach_target_height() {
         } else {
             // Skipping post_wait_time state as it wasn't specified
             RCLCPP_DEBUG(this->get_logger(),
-                         "WaypointNode::mode_reach_target_height: Skipping "
+                         "WaypointNode::%s: Skipping "
                          "'post_wait_time' "
-                         "state because no wait time was specified");
+                         "state because no wait time was specified",
+                         __func__);
+
             this->job_finished();
             reset_node();
         }

@@ -101,10 +101,10 @@ void WaypointNode::event_loop() {
             break;  // Wait for the `wait_timer` to trigger
         default:
             RCLCPP_ERROR(this->get_logger(),
-                         "WaypointNode::event_loop: Unknown mission_state: %d",
-                         get_node_state());
-            this->job_finished(
-                "WaypointNode::event_loop: Unknown mission_state");
+                         "WaypointNode::%s: Unknown mission_state: %d",
+                         __func__, get_node_state());
+            this->job_finished("WaypointNode::" + (std::string) __func__ +
+                               ": Unknown mission_state");
             reset_node();
     }
 }
@@ -140,9 +140,8 @@ void WaypointNode::set_node_state(NodeState_t new_state) {
 
     mission_progress = 0.0;
     node_state = new_state;
-    RCLCPP_DEBUG(this->get_logger(),
-                 "WaypointNode::set_node_state: Set node state to %d",
-                 node_state);
+    RCLCPP_DEBUG(this->get_logger(), "WaypointNode::%s: Set node state to %d",
+                 __func__, node_state);  // TODO output state as string
 }
 
 /**
@@ -161,12 +160,13 @@ bool WaypointNode::check_cmd(const char *function_name) {
         // Cancel job and reset node
 
         RCLCPP_FATAL(this->get_logger(),
-                     "WaypointNode::%s::check_cmd: No command specified. "
+                     "WaypointNode::%s::%s: No command specified. "
                      "Aborting job and resetting node.",
-                     function_name);
+                     function_name, __func__);
 
         this->job_finished("WaypointNode::" + (std::string)function_name +
-                           "::check_cmd: No command specified. Aborting job "
+                           "::" + (std::string) __func__ +
+                           ": No command specified. Aborting job "
                            "and resetting node.");
 
         reset_node();
@@ -177,12 +177,13 @@ bool WaypointNode::check_cmd(const char *function_name) {
         // Cancel job and reset node
 
         RCLCPP_FATAL(this->get_logger(),
-                     "WaypointNode::%s::check_cmd: No position received."
+                     "WaypointNode::%s::%s: No position received."
                      " Aborting job and resetting node.",
-                     function_name);
+                     function_name, __func__);
 
         this->job_finished("WaypointNode::" + (std::string)function_name +
-                           "::check_cmd: No position received. Aborting "
+                           "::" + (std::string) __func__ +
+                           ": No position received. Aborting "
                            "job and resetting node.");
 
         reset_node();
