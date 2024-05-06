@@ -206,9 +206,7 @@ void WaypointNode::callback_wait_time() {
                          __func__, get_node_state());
             this->job_finished(
                 "WaypointNode::" + (std::string) __func__ +
-                ": Node has incorrect state: " +
-                std::to_string(
-                    get_node_state()));  // TODO ouput node state as string
+                ": Node has incorrect state: " + get_node_state_str());
 
             reset_node();
             return;

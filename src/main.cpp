@@ -2,6 +2,10 @@
 
 using std::placeholders::_1;
 
+#define ENUM_TO_STR(member) \
+    case member:            \
+        return #member
+
 WaypointNode::WaypointNode() : CommonNode("waypoint_node") {
     // Create a subscription for the "control" topic
     control_subscription = this->create_subscription<interfaces::msg::Control>(
@@ -140,8 +144,8 @@ void WaypointNode::set_node_state(NodeState_t new_state) {
 
     mission_progress = 0.0;
     node_state = new_state;
-    RCLCPP_DEBUG(this->get_logger(), "WaypointNode::%s: Set node state to %d",
-                 __func__, node_state);  // TODO output state as string
+    RCLCPP_DEBUG(this->get_logger(), "WaypointNode::%s: Set node state to '%s'",
+                 __func__, get_node_state_str(new_state));
 }
 
 /**
@@ -155,7 +159,7 @@ void WaypointNode::set_node_state(NodeState_t new_state) {
  * @return True if both the command and position values are set, false
  * otherwise.
  */
-bool WaypointNode::check_cmd(const char *function_name) {
+bool WaypointNode::check_cmd(const char* function_name) {
     if (!cmd.values_set) {
         // Cancel job and reset node
 
@@ -193,7 +197,38 @@ bool WaypointNode::check_cmd(const char *function_name) {
     return true;
 }
 
-int main(int argc, char *argv[]) {
+/**
+ * Returns a string representation of the current node state.
+ *
+ * @return The string representation of the node state.
+ */
+const char* WaypointNode::get_node_state_str() const {
+    return get_node_state_str(get_node_state());
+}
+
+/**
+ * Converts a NodeState_t enum value to its corresponding string representation.
+ *
+ * @param node_state The NodeState_t enum value to convert.
+ * @return The string representation of the given NodeState_t enum value.
+ * @throws std::runtime_error if the given node_state is unknown.
+ */
+const char* WaypointNode::get_node_state_str(NodeState_t node_state) const {
+    switch (node_state) {
+        ENUM_TO_STR(init);
+        ENUM_TO_STR(pre_wait_time);
+        ENUM_TO_STR(reach_cruise_height);
+        ENUM_TO_STR(fly_to_waypoint);
+        ENUM_TO_STR(reach_target_height);
+        ENUM_TO_STR(post_wait_time);
+        default:
+            throw std::runtime_error(
+                "WaypointNode::" + (std::string) __func__ +
+                ": Unknown node_state: " + std::to_string(node_state));
+    }
+}
+
+int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<WaypointNode>());
     rclcpp::shutdown();

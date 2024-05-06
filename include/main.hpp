@@ -91,6 +91,8 @@ class WaypointNode : public common_lib::CommonNode {
     // Node State
     void set_node_state(NodeState_t new_state);
     constexpr NodeState_t get_node_state() const { return node_state; }
+    const char *get_node_state_str() const;
+    const char *get_node_state_str(NodeState_t node_state) const;
 
     bool get_state_first_loop();
 
