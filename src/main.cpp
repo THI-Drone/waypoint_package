@@ -75,7 +75,7 @@ bool WaypointNode::current_mission_finished() {
  * on the state. The possible states are:
  * - init: Initializes the mode.
  * - pre_wait_time: Wait a predefined time.
- * - reach_cruise_height: Fly drone to the crusing height.
+ * - reach_cruise_height: Fly drone to the cruising height.
  * - fly_to_waypoint: Executes the mode to fly to the waypoint.
  * - reach_target_height: Fly drone to the target height.
  * - post_wait_time: Wait a predefined time.

@@ -100,10 +100,10 @@ void WaypointNode::mode_reach_cruise_height() {
     }
 
     if (current_mission_finished()) {
-        // Drone arrived at crusing height
+        // Drone arrived at cruising height
         RCLCPP_INFO(this->get_logger(),
                     "WaypointNode::%s: Arrived at "
-                    "crusing height",
+                    "cruising height",
                     __func__);
 
         set_node_state(fly_to_waypoint);
