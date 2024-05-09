@@ -94,6 +94,13 @@ void WaypointNode::mode_reach_cruise_height() {
 
         uav_waypoint_command_publisher->publish(msg);
 
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: Sent waypoint command with lat: '%f', "
+                    "lon: '%f', altitude: '%f' [m], speed: '%f' [m/s]",
+                    __func__, waypoint_msg.latitude_deg,
+                    waypoint_msg.longitude_deg,
+                    waypoint_msg.relative_altitude_m, msg.speed_m_s);
+
         // Make sure that no old progress makes this function think it already
         // finished the mission
         mission_progress = 0.0;
@@ -133,6 +140,13 @@ void WaypointNode::mode_fly_to_waypoint() {
         msg.waypoint = waypoint_msg;
 
         uav_waypoint_command_publisher->publish(msg);
+
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: Sent waypoint command with lat: '%f', "
+                    "lon: '%f', altitude: '%f' [m], speed: '%f' [m/s]",
+                    __func__, waypoint_msg.latitude_deg,
+                    waypoint_msg.longitude_deg,
+                    waypoint_msg.relative_altitude_m, msg.speed_m_s);
 
         // Make sure that no old progress makes this function think it already
         // finished the mission
@@ -182,6 +196,13 @@ void WaypointNode::mode_reach_target_height() {
         msg.waypoint = waypoint_msg;
 
         uav_waypoint_command_publisher->publish(msg);
+
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: Sent waypoint command with lat: '%f', "
+                    "lon: '%f', altitude: '%f' [m], speed: '%f' [m/s]",
+                    __func__, waypoint_msg.latitude_deg,
+                    waypoint_msg.longitude_deg,
+                    waypoint_msg.relative_altitude_m, msg.speed_m_s);
 
         // Make sure that no old progress makes this function think it already
         // finished the mission
