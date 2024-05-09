@@ -196,6 +196,9 @@ void WaypointNode::callback_wait_time() {
             break;
         case post_wait_time:
             // Job finished successfully: Reset node for next command
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: --- NODE DEACTIVATED ---", __func__);
+
             this->job_finished();
             reset_node();
             break;

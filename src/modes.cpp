@@ -5,13 +5,16 @@
  *
  * This function is responsible for initializing the mode of the WaypointNode.
  * It checks if a command is specified and performs the necessary actions based
- * on the command. If a pre_wait_time is specified, it sets the node state to
- * pre_wait_time and initializes a wait timer. If no pre_wait_time is specified,
- * it skips the pre_wait_time state and sets the node state to
- * reach_cruise_height.
+ * on the command. If a `pre_wait_time` is specified, it sets the node state to
+ * `pre_wait_time` and initializes a wait timer. If no `pre_wait_time` is
+ * specified, it skips the `pre_wait_time` state and sets the node state to
+ * `reach_cruise_height`.
  */
 void WaypointNode::mode_init() {
     if (get_state_first_loop()) {
+        RCLCPP_INFO(this->get_logger(),
+                    "WaypointNode::%s: --- NODE ACTIVATED ---", __func__);
+
         // Check if cmd is specified
         if (!cmd.values_set) {
             RCLCPP_FATAL(this->get_logger(),
@@ -229,6 +232,9 @@ void WaypointNode::mode_reach_target_height() {
                          "'post_wait_time' "
                          "state because no wait time was specified",
                          __func__);
+
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: --- NODE DEACTIVATED ---", __func__);
 
             this->job_finished();
             reset_node();
