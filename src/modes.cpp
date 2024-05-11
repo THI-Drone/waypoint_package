@@ -47,6 +47,11 @@ void WaypointNode::mode_init() {
             // Set state to pre_wait_time
             set_node_state(pre_wait_time);
 
+            RCLCPP_INFO(
+                this->get_logger(),
+                "WaypointNode::%s: Activating '%s' state. Wait time: %u ms",
+                __func__, get_node_state_str(), cmd.pre_wait_time_ms);
+
             // Initialize Wait Timer
             wait_timer = this->create_wall_timer(
                 std::chrono::milliseconds(cmd.pre_wait_time_ms),
@@ -220,6 +225,11 @@ void WaypointNode::mode_reach_target_height() {
         if (cmd.post_wait_time_ms > 0) {
             // Set state to post_wait_time
             set_node_state(post_wait_time);
+
+            RCLCPP_INFO(
+                this->get_logger(),
+                "WaypointNode::%s: Activating '%s' state. Wait time: %u ms",
+                __func__, get_node_state_str(), cmd.post_wait_time_ms);
 
             // Initialize Wait Timer
             wait_timer = this->create_wall_timer(
