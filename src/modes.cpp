@@ -12,9 +12,6 @@
  */
 void WaypointNode::mode_init() {
     if (get_state_first_loop()) {
-        RCLCPP_INFO(this->get_logger(),
-                    "WaypointNode::%s: --- NODE ACTIVATED ---", __func__);
-
         // Check if cmd is specified
         if (!cmd.values_set) {
             RCLCPP_FATAL(this->get_logger(),

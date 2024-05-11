@@ -26,8 +26,14 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
     if (msg.active != this->get_active()) {
         if (msg.active) {
             this->activate();
+
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: --- NODE ACTIVATED ---", __func__);
         } else {
             this->deactivate();
+
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: --- NODE DEACTIVATED ---", __func__);
         }
     }
 
