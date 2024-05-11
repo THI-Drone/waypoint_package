@@ -193,8 +193,16 @@ void WaypointNode::callback_wait_time() {
     switch (get_node_state()) {
         case pre_wait_time:
             set_node_state(reach_cruise_height);
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: '%s' finished. New state: '%s'",
+                        __func__, get_node_state_str(pre_wait_time),
+                        get_node_state_str());
             break;
         case post_wait_time:
+            RCLCPP_INFO(this->get_logger(),
+                        "WaypointNode::%s: '%s' finished. Deactivating node.",
+                        __func__, get_node_state_str());
+
             // Job finished successfully: Reset node for next command
             RCLCPP_INFO(this->get_logger(),
                         "WaypointNode::%s: --- NODE DEACTIVATED ---", __func__);
