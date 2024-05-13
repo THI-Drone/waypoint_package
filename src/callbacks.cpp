@@ -49,6 +49,9 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
         } else {
             this->deactivate();
 
+            // Deactivate wait timer if it is currently running
+            if (wait_timer) wait_timer->cancel();
+
             RCLCPP_INFO(this->get_logger(),
                         "WaypointNode::%s: --- NODE DEACTIVATED ---", __func__);
         }
