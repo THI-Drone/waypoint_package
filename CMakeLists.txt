@@ -2,11 +2,12 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(JSON_ImplicitConversions OFF) # deactivate implicit type conversion
 
 project(waypoint_package)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wswitch-default)
 endif()
 
 # find dependencies
@@ -18,7 +19,11 @@ find_package(common_package REQUIRED)
 
 include_directories(include)
 
-add_executable(waypoint_node src/main.cpp)
+add_executable(waypoint_node
+               src/callbacks.cpp
+               src/modes.cpp
+               src/main.cpp
+               )
 ament_target_dependencies(waypoint_node rclcpp interfaces common_package nlohmann_json)
 
 install (TARGETS
