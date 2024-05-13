@@ -214,7 +214,8 @@ const char* WaypointNode::get_node_state_str() const {
  * @return The string representation of the given NodeState_t enum value.
  * @throws std::runtime_error if the given node_state is unknown.
  */
-const char* WaypointNode::get_node_state_str(NodeState_t node_state) const {
+const char* WaypointNode::get_node_state_str(
+    const NodeState_t node_state) const {
     switch (node_state) {
         ENUM_TO_STR(init);
         ENUM_TO_STR(pre_wait_time);
