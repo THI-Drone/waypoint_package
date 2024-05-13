@@ -71,11 +71,10 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
                      "WaypointNode::%s: Received invalid json as "
                      "payload: %s",
                      __func__, e.what());
-        this->job_finished(
-            (std::string) "WaypointNode::" + (std::string) __func__ +
-            ": Received "
-            "invalid json as payload: " +
-            e.what());
+        this->job_finished((std::string) "WaypointNode::" + __func__ +
+                           ": Received "
+                           "invalid json as payload: " +
+                           e.what());
         reset_node();
         return;
     }
