@@ -19,6 +19,23 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
         return;
     }
 
+    // Check if node is already in the active state
+    // Note: The other case - duplicate deactivation - is not checked because
+    // Mission Control likes to explicitly deactivate a node even after it
+    // already deactivated itself and this is therefore not an error.
+    if (msg.active == true && msg.active == this->get_active()) {
+        RCLCPP_FATAL(this->get_logger(),
+                     "WaypointNode::%s: Received a control message while "
+                     "already being in the 'active' state",
+                     __func__);
+
+        this->job_finished("WaypointNode::" + (std::string) __func__ +
+                           ": Received a control message while already being "
+                           "in the 'active' state");
+
+        exit(EXIT_FAILURE);
+    }
+
     // Init node state
     reset_node();
 
