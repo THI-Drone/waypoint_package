@@ -104,12 +104,13 @@ void WaypointNode::event_loop() {
         case post_wait_time:
             break;  // Wait for the `wait_timer` to trigger
         default:
-            RCLCPP_ERROR(this->get_logger(),
-                         "WaypointNode::%s: Unknown mission_state: %d",
-                         __func__, get_node_state());
+            RCLCPP_FATAL(
+                this->get_logger(),
+                "WaypointNode::%s: Unknown node_state: %d. Exiting node.",
+                __func__, get_node_state());
             this->job_finished("WaypointNode::" + (std::string) __func__ +
-                               ": Unknown mission_state");
-            reset_node();
+                               ": Unknown node_state");
+            exit(EXIT_FAILURE);
     }
 }
 
