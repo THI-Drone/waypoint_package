@@ -22,20 +22,20 @@
 #include "interfaces/msg/uav_waypoint_command.hpp"
 #include "interfaces/msg/waypoint.hpp"
 
-typedef enum NodeState {
-    init,
-    pre_wait_time,
-    reach_cruise_height,
-    fly_to_waypoint,
-    reach_target_height,
-    post_wait_time,
-} NodeState_t;
-
 /**
  * @brief A class for the waypoint node.
  */
 class WaypointNode : public common_lib::CommonNode {
    private:
+    typedef enum NodeState {
+        init,
+        pre_wait_time,
+        reach_cruise_height,
+        fly_to_waypoint,
+        reach_target_height,
+        post_wait_time,
+    } NodeState_t;
+    
     NodeState_t node_state = init;  //!< Current state of the node
 
     Command cmd;  //!< Command that will be executed when active
