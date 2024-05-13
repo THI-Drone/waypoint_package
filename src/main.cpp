@@ -138,7 +138,7 @@ void WaypointNode::reset_node() {
  *
  * @param new_mission_state The new mission state to set.
  */
-void WaypointNode::set_node_state(NodeState_t new_state) {
+void WaypointNode::set_node_state(const NodeState_t new_state) {
     if (node_state != new_state) {
         state_first_loop = true;
     }

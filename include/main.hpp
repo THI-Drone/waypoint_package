@@ -35,7 +35,7 @@ class WaypointNode : public common_lib::CommonNode {
         reach_target_height,
         post_wait_time,
     } NodeState_t;
-    
+
     NodeState_t node_state = init;  //!< Current state of the node
 
     Command cmd;  //!< Command that will be executed when active
@@ -89,7 +89,7 @@ class WaypointNode : public common_lib::CommonNode {
     void reset_node();
 
     // Node State
-    void set_node_state(NodeState_t new_state);
+    void set_node_state(const NodeState_t new_state);
     constexpr NodeState_t get_node_state() const { return node_state; }
     const char *get_node_state_str() const;
     const char *get_node_state_str(NodeState_t node_state) const;
