@@ -55,10 +55,6 @@ class WaypointNode : public common_lib::CommonNode {
 
     float mission_progress = 0.0;  //!< Current mission progress
 
-    // Thresholds
-    static constexpr uint32_t height_treshold_cm =
-        50;  //!< Height threshold in cm
-
     // Event Loop
     const uint32_t event_loop_time_delta_ms = 100;
     rclcpp::TimerBase::SharedPtr event_loop_timer;
