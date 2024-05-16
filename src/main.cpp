@@ -33,6 +33,10 @@ WaypointNode::WaypointNode() : CommonNode("waypoint_node") {
     event_loop_timer = this->create_wall_timer(
         std::chrono::milliseconds(event_loop_time_delta_ms),
         std::bind(&WaypointNode::event_loop, this));
+
+    // Log message
+    RCLCPP_INFO(this->get_logger(),
+                "WaypointNode::%s: Node started successfully", __func__);
 }
 
 /**
