@@ -47,10 +47,10 @@ class WaypointNode : public common_lib::CommonNode {
 
     Position pos;  //!< Current position
 
-    static constexpr uint16_t max_position_msg_time_difference_ms =
+    static constexpr uint32_t max_position_msg_time_difference_ms =
         100;  //!< Maximum age of a position message from FCC bridge
 
-    static constexpr uint16_t max_progress_msg_time_difference_ms =
+    static constexpr uint32_t max_progress_msg_time_difference_ms =
         500;  //!< Maximum age of a progress message from FCC bridge
 
     float mission_progress = 0.0;  //!< Current mission progress
