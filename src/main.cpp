@@ -6,7 +6,7 @@ using std::placeholders::_1;
     case member:            \
         return #member
 
-WaypointNode::WaypointNode() : CommonNode("waypoint_node") {
+WaypointNode::WaypointNode() : CommonNode(common_lib::node_names::WAYPOINT) {
     // Create a subscription for the "control" topic
     control_subscription = this->create_subscription<interfaces::msg::Control>(
         common_lib::topic_names::Control, 10,

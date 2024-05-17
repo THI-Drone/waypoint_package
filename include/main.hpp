@@ -10,9 +10,11 @@
 
 #include "common_package/commands.hpp"
 #include "common_package/common_node.hpp"
+#include "common_package/node_names.hpp"
 #include "common_package/topic_names.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "structs.hpp"
+
 
 // Message includes
 #include "interfaces/msg/control.hpp"
