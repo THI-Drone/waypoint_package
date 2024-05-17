@@ -15,7 +15,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "structs.hpp"
 
-
 // Message includes
 #include "interfaces/msg/control.hpp"
 #include "interfaces/msg/gps_position.hpp"
