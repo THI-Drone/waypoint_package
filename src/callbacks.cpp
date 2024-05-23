@@ -94,11 +94,25 @@ void WaypointNode::callback_control(const interfaces::msg::Control &msg) {
     cmd.vertical_speed_mps = cmd_json.at("vertical_speed_mps");
 
     // Optional parameters
-    if (cmd_json.contains("pre_wait_time_ms"))
-        cmd.pre_wait_time_ms = cmd_json.at("pre_wait_time_ms");
+    if (cmd_json.contains("pre_wait_time_ms")) {
+        uint32_t pre_wait_time_ms =
+            cmd_json.at("pre_wait_time_ms").get<uint32_t>();
 
-    if (cmd_json.contains("post_wait_time_ms"))
-        cmd.post_wait_time_ms = cmd_json.at("post_wait_time_ms");
+        if (pre_wait_time_ms < Command::min_wait_time_ms)
+            pre_wait_time_ms += Command::min_wait_time_ms;
+
+        cmd.pre_wait_time_ms = pre_wait_time_ms;
+    }
+
+    if (cmd_json.contains("post_wait_time_ms")) {
+        uint32_t post_wait_time_ms =
+            cmd_json.at("post_wait_time_ms").get<uint32_t>();
+
+        if (post_wait_time_ms < Command::min_wait_time_ms)
+            post_wait_time_ms += Command::min_wait_time_ms;
+
+        cmd.post_wait_time_ms = post_wait_time_ms;
+    }
 }
 
 /**
