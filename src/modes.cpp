@@ -188,10 +188,10 @@ void WaypointNode::mode_reach_target_height() {
                     "target height",
                     __func__);
 
-        // Send waypoint command with new height and current position
+        // Send waypoint command with new height and target position
         interfaces::msg::Waypoint waypoint_msg;
-        waypoint_msg.latitude_deg = cmd.coordinate_lat;
-        waypoint_msg.longitude_deg = cmd.coordinate_lon;
+        waypoint_msg.latitude_deg = cmd.target_coordinate_lat;
+        waypoint_msg.longitude_deg = cmd.target_coordinate_lon;
         waypoint_msg.relative_altitude_m = cmd.target_height_cm / 100.0;
 
         interfaces::msg::UAVWaypointCommand msg;
